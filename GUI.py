@@ -4,6 +4,9 @@ import PIL.Image
 from tkinter.ttk import *
 from tkinter import filedialog
 from tkinter import *
+import matplotlib.backends.tkagg as tkagg
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PreData.PredataGUI import data_preparation, _model
 from keras.models import load_model
 import numpy as np
@@ -13,17 +16,27 @@ import scipy.signal as sig
 import scipy
 import librosa, librosa.display
 import json
+import time
 
 def choose_npz():
     global filename
-    global data_X, data_y
+    global data_X, data_y, X_seq, y_seq
+    X_seq, y_seq = [], []
     filename = filedialog.askopenfilename(initialdir="/",
                                           title="Select file eeg",
                                           filetypes=(("npz files","*.npz"), ("all files", "*.*")))
     data_X, data_y = data_preparation(filename)
     spectrum_stft(data_X)
+    seq_lenght =25
+    for i in range(0, len(data_X), seq_lenght):
+        if i + seq_lenght < len(data_X):
+            X_seq.append(np.array(data_X[i:i+seq_lenght]))
+            y_seq.append(np.array(data_y[i:i+seq_lenght]))
+
+    X_seq = np.array(X_seq)
+    y_seq = np.array(y_seq)
     print(">>>> done")
-    return filename , data_X, data_y
+    return filename , data_X, data_y, X_seq, y_seq
 
 def choose_npz_seq():
     global filename
@@ -34,7 +47,7 @@ def choose_npz_seq():
     data_X, data_X_seq = data_prepared_kfold(filename)
     return data_X, data_X_seq
     
-def Load_model():
+def Load_model(): # chosse Seq model
     global pre_model
     model = combo.get()
     if model == 'FPZ_CZ':
@@ -93,7 +106,7 @@ def spectrum_stft(data_X):
     hop_length = 512
     X = librosa.stft(data_X, n_fft=n_fft, hop_length=hop_length)
     S = librosa.amplitude_to_db(abs(X))
-    fig = plt.figure(figsize=(15, 5))
+    fig = plt.figure(figsize=(15, 5))##bug
     librosa.display.specshow(S, sr=fs, hop_length=hop_length, x_axis='time', y_axis='linear')
     plt.colorbar(format='%+2.0f dB')
     plt.savefig('spectrum_stft.jpg')
@@ -127,9 +140,30 @@ def show():
         #print(time)
         #print(X_ravel.shape)
         print(X_ravel[s_time*100:e_time*100].shape) #Hz = 100
+        X_show = X_ravel[s_time*100:e_time*100]
+
+        #fig1 = plt.figure(figsize=(9.1,3.1))#bug
+        #plt.plot(X_show)
+        #show = FigureCanvasTkAgg(fig1, master=canvas2)
+        #show.draw()
+        #show.get_tk_widget().pack()
+        fig = plt.figure(figsize=(15,5))
+        plt.plot(X_show)
+        plt.savefig('signal.jpg')
+        time.sleep(2)
+        img3 = PIL.Image.open("signal.jpg")
+        img3 = img3.resize((1000, 340))
+        img3 = ImageTk.PhotoImage(img3)
+        canvas2.create_image(450,150, image=img3)
+        
         pass
     else:
         pass
+
+
+def _quit():
+    root.quit()     # stops mainloop
+    root.destroy() 
 """
     Graphical Use Interface Application Sleep Scoring 
 """
@@ -208,7 +242,7 @@ but_quit = tk.Button(root, text="QUIT",
                      bg='#FA8072',
                    width=10, height=3,
                    justify=tk.LEFT,
-                   command=root.destroy)
+                   command=_quit)
 but_quit.place(x=150, y=635, width= 120)
         #PREDICT
 but_predict = tk.Button(root, text="PREDICT",
