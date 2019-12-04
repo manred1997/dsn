@@ -48,42 +48,57 @@ def choose_npz_seq():
     return data_X, data_X_seq
     
 def Load_model(): # chosse Seq model
-    global pre_model
+    global dsn_model
     model = combo.get()
     if model == 'FPZ_CZ':
-        pre_model = load_model('weights/eeg_fpz_cz/pre_model_10.h5')
-        pre_model.summary()
+        dsn_model = load_model('weights/eeg_fpz_cz/pre_model_10.h5')
+        dsn_model.summary()
         print(">>>> done")
     if model == 'PZ_OZ':
-        pre_model = load_model('weights/eeg_pz_oz/pre_model_13.h5')
-        pre_model.summary()
+        dsn_model = load_model('weights/eeg_pz_oz/pre_model_13.h5')
+        dsn_model.summary()
+        print(">>>> done")
+    if model == 'Seq_FPZ_CZ':
+        dsn_model = load_model('weights/eeg_fpz_cz/seq_model_10.h5')
+        dsn_model.summary()
+        print(">>>> done")
+    if model == 'Seq_PZ_OZ':
+        dsn_model = load_model('weights/eeg_pz_oz/seq_model_13.h5')
+        dsn_model.summary()
         print(">>>> done")
     else:   
         pass
-    return pre_model
+    return dsn_model
 
 def predict():
     global y_pred, f1 , report , acc
-    y_pred = pre_model.predict(data_X)
-    y_pred = np.array([np.argmax(s) for s in y_pred])
-    y_test = np.array([np.argmax(s) for s in data_y])
-    f1 = f1_score(y_test, y_pred, average="macro")
-    print(">>> f1 score: {}".format(f1))
-    report = classification_report(y_test, y_pred)
-    print(report)
-    acc = accuracy_score(y_test, y_pred)
-    print(">>> accucracy: {}".format(acc))
-    fig = plt.figure(figsize=(20,8))
-    plot = plt.subplot(111)
-    plot.plot(y_test, label='test')
-    plot.plot(y_pred, label='predict')
-    plt.title('Sleep Scoring Base Single EEG signal')
-    plt.xlabel("Time")
-    plt.ylabel("Stage")
-    plot.legend()
-    plt.savefig('result.png')
-    #plt.show()
-    print(">>>> done")
+    model = combo.get()
+    if model == 'FPZ_CZ' or 'PZ_OZ':
+        y_pred = dsn_model.predict(data_X)
+        y_pred = np.array([np.argmax(s) for s in y_pred])
+        y_test = np.array([np.argmax(s) for s in data_y])
+        f1 = f1_score(y_test, y_pred, average="macro")
+        print(">>> f1 score: {}".format(f1))
+        report = classification_report(y_test, y_pred)
+        print(report)
+        acc = accuracy_score(y_test, y_pred)
+        print(">>> accucracy: {}".format(acc))
+        fig = plt.figure(figsize=(20,8))
+        plot = plt.subplot(111)
+        plot.plot(y_test, label='test')
+        plot.plot(y_pred, label='predict')
+        plt.title('Sleep Scoring Base Single EEG signal')
+        plt.xlabel("Time")
+        plt.ylabel("Stage")
+        plot.legend()
+        plt.savefig('result.png')
+        #plt.show()
+        print(">>>> done")
+    #if model == 'Seq_FPZ_CZ' or 'Seq_PZ_OZ': BUG
+    #    y_pred = dsn_model.predict(X_seq)
+        
+    else:
+        pass
     return y_pred, f1 , report , acc
 
 def save_up_data():
@@ -155,7 +170,6 @@ def show():
         img3 = img3.resize((1000, 340))
         img3 = ImageTk.PhotoImage(img3)
         canvas2.create_image(450,150, image=img3)
-        
         pass
     else:
         pass
@@ -292,7 +306,7 @@ textbox2.place(x=60, y=30, width=180)
 textbox3 = tk.Entry(panel)
 textbox3.place(x=60, y=55, width=180)
 
-combo = Combobox(root, value=('FPZ_CZ', 'PZ_OZ'))
+combo = Combobox(root, value=('FPZ_CZ', 'PZ_OZ', 'Seq_FPZ_CZ', 'Seq_PZ_OZ'))
 combo.place(x=80, y=400, width=190)
 
 tb1 = tk.Entry(panel_2)
