@@ -48,23 +48,28 @@ def choose_npz_seq():
     return data_X, data_X_seq
     
 def Load_model(): # chosse Seq model
+    #del dsn_model
     global dsn_model
     model = combo.get()
     if model == 'FPZ_CZ':
         dsn_model = load_model('weights/eeg_fpz_cz/pre_model_10.h5')
         dsn_model.summary()
+        print("> pre_model_FPZ_CZ")
         print(">>>> done")
-    if model == 'PZ_OZ':
+    elif model == 'PZ_OZ':
         dsn_model = load_model('weights/eeg_pz_oz/pre_model_13.h5')
         dsn_model.summary()
+        print("> pre_model_PZ_OZ")
         print(">>>> done")
-    if model == 'Seq_FPZ_CZ':
+    elif model == 'Seq_FPZ_CZ':
         dsn_model = load_model('weights/eeg_fpz_cz/seq_model_10.h5')
         dsn_model.summary()
+        print("> finetune_model_FPZ_CZ")
         print(">>>> done")
-    if model == 'Seq_PZ_OZ':
+    elif model == 'Seq_PZ_OZ':
         dsn_model = load_model('weights/eeg_pz_oz/seq_model_13.h5')
         dsn_model.summary()
+        print("> finetune_model_PZ_OZ")
         print(">>>> done")
     else:   
         pass
@@ -73,7 +78,10 @@ def Load_model(): # chosse Seq model
 def predict():
     global y_pred, f1 , report , acc
     model = combo.get()
-    if model == 'FPZ_CZ' or 'PZ_OZ':
+    if model == 'FPZ_CZ' or model =='PZ_OZ':
+        #print(data_X.shape)
+        #print(X_seq.shape)
+        #print("asdasd")
         y_pred = dsn_model.predict(data_X)
         y_pred = np.array([np.argmax(s) for s in y_pred])
         y_test = np.array([np.argmax(s) for s in data_y])
@@ -94,8 +102,29 @@ def predict():
         plt.savefig('result.png')
         #plt.show()
         print(">>>> done")
-    #if model == 'Seq_FPZ_CZ' or 'Seq_PZ_OZ': BUG
-    #    y_pred = dsn_model.predict(X_seq)
+    elif model == 'Seq_FPZ_CZ' or model =='Seq_PZ_OZ':
+        #print(X_seq.shape)
+        y_pred = dsn_model.predict(X_seq)
+        y_pred = y_pred.reshape((y_pred.shape[0]*y_pred.shape[1],y_pred.shape[2]))
+        y_pred = np.array([np.argmax(s) for s in y_pred])
+        y_test = y_seq.reshape((y_seq.shape[0]*y_seq.shape[1],y_seq.shape[2]))
+        y_test = np.array([np.argmax(s) for s in y_test])
+        f1 = f1_score(y_test, y_pred, average="macro")
+        print(">>> f1 score: {}".format(f1))
+        report = classification_report(y_test, y_pred)
+        print(report)
+        acc = accuracy_score(y_test, y_pred)
+        print(">>> accucracy: {}".format(acc))
+        fig = plt.figure(figsize=(20,8))
+        plot = plt.subplot(111)
+        plot.plot(y_test, label='test')
+        plot.plot(y_pred, label='predict')
+        plt.title('Sleep Scoring Base Single EEG signal')
+        plt.xlabel("Time")
+        plt.ylabel("Stage")
+        plot.legend()
+        plt.savefig('result.png')
+        print(">>> done")
         
     else:
         pass
