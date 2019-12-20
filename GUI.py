@@ -213,7 +213,7 @@ def _quit():
 
 # Design Windows, panel 
 root = tk.Tk()
-root.title("APPLICATION STAGE SCORING")
+root.title("Sleep stage detector using EEG signal")
 root.geometry("1200x700")
 root.resizable(0, 0)
 root.configure(background='#808080')
@@ -274,10 +274,9 @@ label9.place(x=125, y=55, width=40)
 
 # Design Name Application
 Name = tk.Label(root,
-                 text="Application stage scoring\nbase on raw eeg signal",
+                 text="SLEEP STAGE DETECTOR\n Developer: Tran Hoang Vu \n Student ID: 1514122 \n HCMC University of Technology",
                  pady=10,
-                 bg='#FA8072',
-                 font=('times', 18, 'italic'))
+                 bg='#ffffff')
 Name.place(anchor= tk.CENTER, x=143, y=45)
 # Design Button
         #QUIT
